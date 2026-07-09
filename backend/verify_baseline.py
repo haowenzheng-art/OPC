@@ -130,7 +130,15 @@ def create_project(token, idea):
     return body["id"], None
 
 
-def wait_done(token, pid, timeout_s=600):
+def wait_done(token, pid, timeout_s=1200):
+    """等 done, 捕获中间状态 (planning/developing/testing/failed).
+
+    默认 1200s (20 分钟): NEW-1 实测 todo 端到端 ~12-15 分钟 (含 2 轮 test + repair),
+    旧 600s 误判为 timeout.
+    可被 OPC_BASELINE_TIMEOUT env 覆盖.
+    """
+    import os as _os
+    timeout_s = int(_os.environ.get("OPC_BASELINE_TIMEOUT", timeout_s))
     """等 done, 捕获中间状态 (planning/developing/testing/failed)."""
     deadline = time.time() + timeout_s
     last_state = None
