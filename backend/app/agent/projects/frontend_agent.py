@@ -286,6 +286,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             """
 - 只输出 page.tsx 内容, 不包含 ``` 标记
 
+## JSX 语法硬约束 (NEW-3, 2026-07-09)
+- **每个开标签必须有匹配闭标签**: `<div>...</div>`, `<span>...</span>`, `<section>...</section>` 等
+- **自闭合标签用 /> 结尾**: `<img ... />`, `<input ... />`, `<br />`, `<hr />`
+- **嵌套顺序正确**: 内层先关, 外层后关 (例: `<div><span>x</span></div>` 不是 `<div><span>x</div></span>`)
+- **条件渲染用三元或 &&**: `{cond ? <A/> : <B/>}` 或 `{cond && <A/>}`, 不要裸 `<A/>` 夹条件
+- **表达式/JSX 中不要忘记 `return (...)` 包裹**: 多行 JSX 必带 `return ( <div>...</div> )`
+- **不要遗漏 close**: 每个 map / 嵌套 div / fragment 必须数清括号; 写完通读一遍对数
+
 示例结构:
 'use client';
 import { useEffect, useState } from 'react';

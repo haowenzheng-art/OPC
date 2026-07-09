@@ -247,7 +247,7 @@ def run_one(token: str, task: dict) -> BaselineResult:
 
     # Step 2: 等 done / failed
     print(f"[2/4] Wait for generation (max 600s)...")
-    final_body, wait_err = wait_done(token, pid, timeout_s=600)
+    final_body, wait_err = wait_done(token, pid)
     result.duration_s = time.time() - start
     result.final_status = final_body.get("status", "?") if final_body else "unknown"
 

@@ -236,9 +236,34 @@ def _extract_signals_from_errors(
 
 
 def _materialize(files: dict[str, str], target_dir: Path) -> None:
+    """写生成的源文件到 target_dir.
+
+    NEW-4 (2026-07-09): 保留 node_modules / package-lock.json / package.json 跨轮复用
+    (省 npm install 时间). 只清 src + build cache.
+    第一次跑时 target_dir 不存在, 正常创建.
+    """
     if target_dir.exists():
-        shutil.rmtree(target_dir, ignore_errors=True)
-    target_dir.mkdir(parents=True, exist_ok=True)
+        # 先把"重的"挪走 (跨轮复用, 省下载).
+        preserve_dir = Path(tempfile.mkdtemp(prefix="opc_preserve_"))
+        for name in ("node_modules", "package-lock.json", "package.json"):
+            p = target_dir / name
+            if p.exists():
+                shutil.move(str(p), str(preserve_dir / name))
+
+        # 清掉 src + build cache (.next / dist).
+        for entry in target_dir.iterdir():
+            if entry.name == preserve_dir.name:
+                continue
+            if entry.is_dir():
+                shutil.rmtree(entry, ignore_errors=True)
+            else:
+                entry.unlink(missing_ok=True)
+
+        target_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        preserve_dir = None  # type: ignore[assignment]
+        target_dir.mkdir(parents=True, exist_ok=True)
+
     for path, content in files.items():
         # orchestrator may merge file content from disk as bytes; write_text requires str.
         if isinstance(content, bytes):
@@ -246,6 +271,40 @@ def _materialize(files: dict[str, str], target_dir: Path) -> None:
         full = target_dir / path
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
+
+    # 还原"重的",让 dev_server 跳过 npm install.
+    if preserve_dir is not None:
+        for name in ("node_modules", "package-lock.json", "package.json"):
+            src = preserve_dir / name
+            if src.exists():
+                dest = target_dir / name
+                if not dest.exists():
+                    shutil.move(str(src), str(dest))
+        shutil.rmtree(preserve_dir, ignore_errors=True)
+
+
+def _clean_build_cache(
+    test_dir: Path,
+    backend_dir: Path | None = None,
+    frontend_dir: Path | None = None,
+) -> None:
+    """清 build cache 防止 stale artifact 影响下次 test.
+
+    NEW-4 (2026-07-09): 删 .next, dist, .turbo 等 build 输出,
+    保留 node_modules / package*.json.
+    每个 subdir 单独处理 (避免锁文件锁住时部分失败).
+    """
+    build_dirs = {".next", "dist", ".turbo", "build", ".cache"}
+    targets = [d for d in (backend_dir, frontend_dir) if d is not None]
+    if not targets and test_dir.exists():
+        targets = [test_dir / "backend", test_dir / "frontend"]
+    for d in targets:
+        if not d.exists():
+            continue
+        for sub in build_dirs:
+            p = d / sub
+            if p.exists():
+                shutil.rmtree(p, ignore_errors=True)
 
 
 async def _http_get(url: str, expect: int = 200, timeout: int = 5) -> tuple[bool, str]:
@@ -350,9 +409,14 @@ class TestAgent(ProjectAgent):
         不靠 logs ready marker (Next.js 首次编译慢, marker 延迟大),
         直接轮询 HTTP 200 — 这是真正的 ready 信号.
 
-        用 tempfile.mkdtemp() 隔离每次 run,避免 Windows 文件锁残留 node_modules.
+        NEW-4 (2026-07-09): 改用固定目录 backend/test_runs/{project_id}/,
+        跨轮复用 node_modules (skip 90% npm install 时间).
+        Windows 文件锁风险: build cache (.next) 每次清, 但 node_modules 保留.
         """
-        test_dir = Path(tempfile.mkdtemp(prefix=f"opc_test_{self.project_id}_"))
+        # 固定目录而非 mkdtemp — node_modules 跨轮复用.
+        fixed_root = Path(__file__).resolve().parent.parent.parent.parent / "test_runs"
+        test_dir = fixed_root / f"project_{self.project_id}"
+        test_dir.mkdir(parents=True, exist_ok=True)
         handle = DevServerHandle()
         logs: list[str] = []
 
@@ -429,7 +493,12 @@ class TestAgent(ProjectAgent):
             return self._dynamic_fail("both", f"dynamic phase exception: {e}\n{tb}", logs)
         finally:
             teardown(handle)
-            shutil.rmtree(test_dir, ignore_errors=True)
+            # NEW-4 (2026-07-09): 保留 test_dir 跨轮 (node_modules 复用),
+            # 但清 build cache (.next / dist) 以避免 stale artifact.
+            try:
+                _clean_build_cache(test_dir, backend_dir=test_dir / "backend", frontend_dir=test_dir / "frontend")
+            except Exception:
+                pass  # teardown 不应被 cache clean 失败影响
 
     async def _wait_http_with_proc_check(
         self,
