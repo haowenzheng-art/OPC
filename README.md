@@ -4,7 +4,7 @@
 
 **一句话生成一个完整应用，多 Agent 协同。**
 
-[官网](https://github.com/haowenzheng/opc) · [PRD](docs/PRD.md) · [截图](docs/screenshots/) · [更新日志](docs/CHANGELOG.md)
+[官网](https://haowenzheng-art.github.io/OPC/) · [PRD](docs/PRD.md) · [截图](docs/screenshots/) · [更新日志](docs/CHANGELOG.md)
 
 ---
 
@@ -152,7 +152,7 @@ LLM 第一次写错是常态。OPC 不重抽整个项目，而是：
 ### 快速开始（Docker Compose）
 
 ```bash
-git clone https://github.com/haowenzheng/opc.git
+git clone https://github.com/haowenzheng-art/OPC.git
 cd opc
 cp backend/.env.example backend/.env
 # 编辑 backend/.env 填入你的 LLM API key
