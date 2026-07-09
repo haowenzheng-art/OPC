@@ -1,0 +1,22 @@
+{
+  "mount_prefix": "/api/v1",
+  "endpoints": [
+    { "method": "GET",    "path": "/todos",     "full": "/api/v1/todos",     "query": { "filter": "all|active|completed (optional)" } },
+    { "method": "POST",   "path": "/todos",     "full": "/api/v1/todos",     "body":  { "title": "string (required, 1-500 chars)" } },
+    { "method": "PUT",    "path": "/todos/:id", "full": "/api/v1/todos/:id", "body":  { "title": "string (optional)", "completed": "boolean (optional)" } },
+    { "method": "DELETE", "path": "/todos/:id", "full": "/api/v1/todos/:id" }
+  ],
+  "derived_from": "routes.ts",
+  "version": 2,
+  "todo_shape": {
+    "id": "string (cuid)",
+    "title": "string",
+    "completed": "boolean",
+    "createdAt": "ISO 8601 string",
+    "updatedAt": "ISO 8601 string"
+  },
+  "responses": {
+    "success": { "shape": "{ data: <TodoPayload or TodoPayload[]> }" },
+    "error":   { "shape": "{ error: { code: string, message: string } }" }
+  }
+}

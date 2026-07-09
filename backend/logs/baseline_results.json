@@ -1,0 +1,36 @@
+[
+  {
+    "task_id": "todo",
+    "idea": "做一个待办事项清单，支持增删改查和完成状态切换",
+    "expected_template": "todo-app-v2",
+    "success": false,
+    "final_status": "failed",
+    "failure_class": "project_failed",
+    "error_message": "(no error message in API response)",
+    "duration_s": 550.4,
+    "pid": 10,
+    "http_status": 0,
+    "http_body_len": 0,
+    "preview_url": "",
+    "tsc_pass": null,
+    "fetch_urls": [],
+    "contract_endpoints": []
+  },
+  {
+    "task_id": "calculator-bmi",
+    "idea": "做一个 BMI 计算器，输入身高和体重，输出 BMI 值和健康等级",
+    "expected_template": "calculator-v1",
+    "success": false,
+    "final_status": "failed",
+    "failure_class": "project_failed",
+    "error_message": "(no error message in API response)",
+    "duration_s": 13.9,
+    "pid": 12,
+    "http_status": 0,
+    "http_body_len": 0,
+    "preview_url": "",
+    "tsc_pass": null,
+    "fetch_urls": [],
+    "contract_endpoints": []
+  }
+]

@@ -1,0 +1,1 @@
+import dotenv from "dotenv"; dotenv.config(); console.log("Config check:"); console.log("USE_LLM:", process.env.USE_LLM); console.log("API_KEY:", process.env.OPENAI_API_KEY ? "Set" : "Not set"); console.log("API_BASE:", process.env.API_BASE_URL); console.log("MODEL:", process.env.MODEL_NAME); console.log("OPC_MODE:", process.env.OPC_MODE);

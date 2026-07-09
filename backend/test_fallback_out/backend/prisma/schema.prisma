@@ -1,0 +1,21 @@
+// todo-app-v2 fallback template — Prisma + SQLite (file-based, no external DB).
+// DATABASE_URL 默认指向本地 data.db 文件，启动时 index.ts 会自动 `prisma db push`。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Todo {
+  id        String   @id @default(cuid())
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}

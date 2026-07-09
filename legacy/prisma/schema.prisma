@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/db.sqlite"
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  userIdea  String
+  status    String   // idle/planning/developing/testing/deploying/learning/done
+  prdPath   String?
+  repoPath  String?
+  deployUrl String?
+
+  // 用了哪个工作流（如果有）
+  workflowId String?
+  workflow   WorkflowTemplate? @relation(fields: [workflowId], references: [id])
+
+  // 关联
+  messages  Message[]
+  tasks     Task[]
+  memories  AgentMemory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id        String  @id @default(cuid())
+  projectId String
+  fromAgent String
+  toAgent   String? // null表示群聊
+  type      String  // text/file/action
+
+  content   String
+
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  projectId   String
+  assignee    String   // pm/frontend/backend/test/ops
+  description String
+  status      String   // todo/in_progress/done/blocked
+  priority    String   // low/medium/high
+
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model AgentMemory {
+  id         String   @id @default(cuid())
+  projectId  String
+  agentRole  String   // pm/frontend/backend/test/ops
+  content    String   // JSON存结构化记忆
+  importance Int      // 0-10，用于淘汰旧记忆
+
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, agentRole])
+  @@index([importance])
+}
+
+// 工作流模板
+model WorkflowTemplate {
+  id          String   @id @default(cuid())
+  name        String   // "简单待办清单"
+  description String
+  category    String   // "todo", "blog", "landing-page"
+  complexity  String   // simple/medium/complex
+
+  // JSON存每个Agent的步骤
+  pmSteps     String
+  frontendSteps String
+  backendSteps String
+  testSteps   String
+  opsSteps    String
+
+  // 使用统计
+  usageCount  Int      @default(0)
+  lastUsed    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+}
+
+// 通用技巧库（所有Agent共享学习）
+model SkillMemory {
+  id        String   @id @default(cuid())
+  category  String   // "file_operations", "tool_use", "debugging"
+  title     String   // 简短描述
+  content   String   // 详细内容：问题、解决办法、代码示例
+  tags      String   // 逗号分隔的标签，方便检索
+  successCount Int    @default(0) // 成功使用次数
+
+  createdAt DateTime @default(now())
+
+  @@index([category])
+  @@index([tags])
+}

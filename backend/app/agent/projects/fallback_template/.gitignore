@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+
+# Local sqlite db file generated at first boot
+*.db
+
+# Playwright artifacts
+e2e/artifacts/
+
+# npm lock files are intentionally NOT committed — agent runs `npm install` fresh
+package-lock.json

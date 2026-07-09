@@ -1,0 +1,72 @@
+{
+  "$schema_hint": "LLM-fillable text slots. Keep string values < 80 chars; support {brand} placeholders if needed.",
+  "app_name": {
+    "value": "Todos",
+    "where": "frontend/src/app/page.tsx::h1",
+    "rules": "1-3 words; capitalized; describes the product",
+    "examples": ["Todos", "Tasks", "My List"]
+  },
+  "tagline": {
+    "value": "Stay focused. One thing at a time.",
+    "where": "frontend/src/app/page.tsx::header p",
+    "rules": "<= 60 chars; one short sentence; sets tone",
+    "examples": ["Stay focused. One thing at a time.", "Capture what matters.", "Plan your day, simply."]
+  },
+  "input_placeholder": {
+    "value": "What needs to be done?",
+    "where": "frontend/src/app/page.tsx::input.placeholder",
+    "rules": "<= 60 chars; imperative / question",
+    "examples": ["What needs to be done?", "Add a task…", "Type a todo and press Enter"]
+  },
+  "filter_all_label": {
+    "value": "All",
+    "where": "frontend/src/app/page.tsx::tabs[0]",
+    "rules": "<= 12 chars; title case"
+  },
+  "filter_active_label": {
+    "value": "Active",
+    "where": "frontend/src/app/page.tsx::tabs[1]",
+    "rules": "<= 12 chars; title case"
+  },
+  "filter_completed_label": {
+    "value": "Completed",
+    "where": "frontend/src/app/page.tsx::tabs[2]",
+    "rules": "<= 12 chars; title case"
+  },
+  "empty_message": {
+    "value": "No todos yet. Add one above.",
+    "where": "frontend/src/app/page.tsx::empty state when filter='all'",
+    "rules": "<= 80 chars; warm, instructive",
+    "examples": ["No todos yet. Add one above.", "Nothing here yet — try adding a task."]
+  },
+  "empty_active_message": {
+    "value": "No active todos.",
+    "where": "frontend/src/app/page.tsx::empty state when filter='active'",
+    "rules": "<= 60 chars"
+  },
+  "empty_completed_message": {
+    "value": "No completed todos.",
+    "where": "frontend/src/app/page.tsx::empty state when filter='completed'",
+    "rules": "<= 60 chars"
+  },
+  "clear_completed_label": {
+    "value": "Clear completed",
+    "where": "frontend/src/app/page.tsx::clear-completed btn",
+    "rules": "<= 30 chars; verb + noun"
+  },
+  "offline_banner_message": {
+    "value": "Backend unreachable — using local storage. Changes will save locally until it recovers.",
+    "where": "frontend/src/app/page.tsx::role='status' banner",
+    "rules": "<= 140 chars; explains the local-storage fallback"
+  },
+  "items_left_template": {
+    "value": "{n} items left",
+    "where": "frontend/src/app/page.tsx::count span",
+    "rules": "supports pluralization; {n} is the active count"
+  },
+  "tone_primary": {
+    "value": "blue",
+    "where": "design_spec.json::palette.primary",
+    "rules": "ONE OF [blue, indigo, emerald, amber, rose, slate, violet]; tailwind-safe, no arbitrary values"
+  }
+}

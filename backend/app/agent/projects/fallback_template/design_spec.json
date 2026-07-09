@@ -1,0 +1,42 @@
+{
+  "palette": {
+    "primary": "blue-500",
+    "primary_hover": "blue-600",
+    "secondary": "gray-100",
+    "accent": "emerald-500",
+    "danger": "red-500",
+    "warning": "amber-500",
+    "background": "gray-50",
+    "surface": "white",
+    "border": "gray-200",
+    "text": "gray-900",
+    "text_muted": "gray-500"
+  },
+  "typography": {
+    "h1": "text-3xl font-bold tracking-tight text-gray-900",
+    "h2": "text-2xl font-semibold text-gray-900",
+    "h3": "text-lg font-medium text-gray-900",
+    "body": "text-base text-gray-900",
+    "small": "text-sm text-gray-500"
+  },
+  "spacing": {
+    "container": "max-w-2xl mx-auto p-6 sm:p-8",
+    "page": "min-h-screen bg-gray-50 py-10 px-4",
+    "section_gap": "space-y-6",
+    "list_gap": "space-y-2",
+    "card_padding": "p-3 sm:p-4"
+  },
+  "components": {
+    "card": "bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8",
+    "input": "px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-{primary} focus:border-transparent",
+    "button_primary": "px-6 py-2 bg-{primary} text-white rounded-lg hover:bg-{primary_hover} transition disabled:opacity-50 disabled:cursor-not-allowed",
+    "button_secondary": "px-4 py-2 bg-{secondary} text-{text} rounded-lg hover:bg-gray-200 transition",
+    "filter_tab_active": "px-3 py-1.5 text-sm rounded-md bg-{primary} text-white transition",
+    "filter_tab_inactive": "px-3 py-1.5 text-sm rounded-md text-gray-600 hover:bg-gray-100 transition",
+    "list_item": "flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-100",
+    "checkbox": "w-5 h-5 accent-{primary} cursor-pointer",
+    "empty_state": "text-gray-500 text-center py-8"
+  },
+  "mood": "modern minimal clean",
+  "rationale": "minimal mono-tone (blue + neutral grays) keeps focus on content; rounded-2xl + shadow-sm gives a soft modern feel without chrome."
+}
