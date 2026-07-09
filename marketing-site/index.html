@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OPC — One Prompt Creates</title>
+  <meta name="description" content="One prompt creates a complete project. A multi-agent system that turns a single sentence into a running application." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          colors: {
+            ink: '#0a0a0a',
+            paper: '#fbfbfd',
+            mist: '#f5f5f7',
+            line: '#d2d2d7',
+          },
+          letterSpacing: {
+            tightest: '-0.05em',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    html, body { background: #fbfbfd; color: #0a0a0a; }
+    body { font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+
+    /* Apple-ish massive display type */
+    .display-1 { font-size: clamp(3.2rem, 9vw, 8.5rem); line-height: 0.95; letter-spacing: -0.045em; font-weight: 600; }
+    .display-2 { font-size: clamp(2.4rem, 5.6vw, 5.25rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 600; }
+    .display-3 { font-size: clamp(1.9rem, 3.5vw, 3.25rem); line-height: 1.1; letter-spacing: -0.025em; font-weight: 600; }
+    .eyebrow   { font-size: 1.75rem; letter-spacing: -0.02em; font-weight: 500; color: #6e6e73; }
+
+    /* Subtle grain over dark sections — kills the "flat black" feel */
+    .grain::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 3px 3px; mix-blend-mode: screen; opacity: .35;
+    }
+
+    /* Nav pill link (Apple style) */
+    .pill-link { color: #0a0a0a; transition: color .2s ease; }
+    .pill-link:hover { color: #6e6e73; }
+    .pill-link::after {
+      content: "›"; display: inline-block; margin-left: .15em; transform: translateY(-1px);
+      transition: transform .25s ease; color: #0a84ff;
+    }
+    .pill-link:hover::after { transform: translate(2px, -1px); }
+
+    /* Scroll reveal — always visible (no hiding), JS adds a soft entrance when in-view.
+       Default-visible is critical: SSR, no-JS, and any capture/print context must show real content. */
+    .reveal { opacity: 1; transform: none; }
+    html.js-ready .reveal { transition: opacity .9s ease, transform .9s cubic-bezier(.22,.61,.36,1); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .node { animation: none; }
+      .caret { animation: none; }
+    }
+
+    /* Hero prompt simulation */
+    .term-line { opacity: 0; transform: translateY(6px); animation: termIn .5s ease forwards; }
+    @keyframes termIn { to { opacity: 1; transform: none; } }
+    .caret { display: inline-block; width: 9px; height: 1.05em; background: #0a0a0a; vertical-align: -2px; margin-left: 2px; animation: blink 1.05s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Floating agent nodes for the how-it-works panel */
+    .node {
+      position: absolute; border: 1px solid rgba(10,10,10,0.12); border-radius: 999px;
+      padding: 6px 12px; font-size: 12px; letter-spacing: -0.01em; background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(8px); white-space: nowrap;
+      animation: float 6s ease-in-out infinite;
+    }
+    .node.n2 { animation-delay: -1.6s; }
+    .node.n3 { animation-delay: -3s; }
+    .node.n4 { animation-delay: -4.4s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    /* Soft glow accent (single accent — Apple uses blue) */
+    .accent-dot { width: 10px; height: 10px; border-radius: 999px; background: #0a84ff; display: inline-block; box-shadow: 0 0 0 6px rgba(10,132,255,0.10); }
+
+    /* Section divider */
+    .rule { height: 1px; background: rgba(10,10,10,0.08); }
+
+    /* Use-case card hover */
+    .card { transition: transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s ease; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 30px 60px -30px rgba(10,10,10,0.25); }
+
+    /* Section background helper */
+    .bg-paper { background: #fbfbfd; }
+    .bg-mist  { background: #f5f5f7; }
+    .bg-ink   { background: #0a0a0a; color: #f5f5f7; }
+
+    /* Links in dark sections */
+    .dark .pill-link { color: #f5f5f7; }
+    .dark .pill-link:hover { color: #86868b; }
+    .dark .rule { background: rgba(255,255,255,0.08); }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+  <!-- ============ NAV ============ -->
+  <header class="sticky top-0 z-50 bg-paper/80 backdrop-blur-md border-b border-black/[0.06]">
+    <nav class="max-w-[1024px] mx-auto px-6 h-12 flex items-center justify-between text-xs">
+      <a href="#" class="font-semibold tracking-tight text-ink">OPC</a>
+      <ul class="hidden md:flex items-center gap-7 text-ink/80">
+        <li><a href="#how" class="hover:text-ink">How it works</a></li>
+        <li><a href="#demo" class="hover:text-ink">Live demo</a></li>
+        <li><a href="#use" class="hover:text-ink">Use cases</a></li>
+        <li><a href="#start" class="hover:text-ink">Get started</a></li>
+      </ul>
+      <a href="#start" class="text-ink hover:text-ink/60">Try it →</a>
+    </nav>
+  </header>
+
+  <!-- ============ 1. HERO ============ -->
+  <section class="bg-paper relative">
+    <div class="max-w-[1024px] mx-auto px-6 pt-24 md:pt-36 pb-20 text-center">
+      <div class="reveal">
+        <p class="eyebrow mb-6">One Person Company</p>
+        <h1 class="display-1">One&nbsp;prompt.<br/>One&nbsp;project.</h1>
+        <p class="mt-7 text-lg md:text-xl text-ink/70 max-w-xl mx-auto leading-relaxed">
+          OPC turns a single sentence into a running application — design, frontend and backend orchestrated by a team of focused agents.
+        </p>
+        <div class="mt-10 flex items-center justify-center gap-7 text-base">
+          <a href="#start" class="pill-link font-medium">Start creating</a>
+          <a href="#how" class="pill-link font-medium">See how it works</a>
+        </div>
+      </div>
+
+      <!-- Prompt-into-product terminal -->
+      <div class="mt-20 md:mt-28 reveal">
+        <div class="mx-auto max-w-3xl rounded-2xl border border-black/10 bg-white shadow-[0_40px_80px_-40px_rgba(10,10,10,0.25)] overflow-hidden text-left">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-black/[0.06] bg-mist/60">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f57]"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#febc2e]"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#28c840]"></span>
+            <span class="ml-3 text-[11px] text-ink/50 font-mono">opc · ~/projects</span>
+          </div>
+          <div id="term" class="p-6 md:p-8 font-mono text-[13px] md:text-sm text-ink/85 leading-relaxed min-h-[280px]">
+            <!-- Lines injected by JS -->
+          </div>
+        </div>
+        <p class="mt-5 text-xs text-ink/45">A single prompt → a deployable project. Watch the agents take over.</p>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </section>
+
+  <!-- ============ 2. HOW IT WORKS ============ -->
+  <section id="how" class="bg-paper">
+    <div class="max-w-[1024px] mx-auto px-6 py-24 md:py-32">
+      <div class="reveal max-w-2xl">
+        <p class="eyebrow mb-4">How it works</p>
+        <h2 class="display-2">Four agents.<br/>One&nbsp;goal.</h2>
+        <p class="mt-6 text-lg text-ink/70 leading-relaxed">
+          Each prompt is decomposed by an orchestrator and routed to the right specialist. They collaborate in parallel, validate each other, and ship a coherent project — not a pile of fragments.
+        </p>
+      </div>
+
+      <!-- 4-up grid, each tile behaves like an Apple product card -->
+      <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-px bg-black/[0.06] border border-black/[0.06] rounded-2xl overflow-hidden">
+        <!-- Orchestrator -->
+        <div class="bg-paper p-10 reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">01 · Orchestrator</p>
+          <h3 class="display-3 mt-3">Decomposes the prompt.<br/>Assigns the work.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed max-w-md">
+            Reads your one-liner, drafts a plan, breaks it into tasks, and dispatches each task to the right agent with clear acceptance criteria.
+          </p>
+        </div>
+        <!-- Designer -->
+        <div class="bg-paper p-10 reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">02 · Designer</p>
+          <h3 class="display-3 mt-3">Sketches the product.<br/>Picks the system.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed max-w-md">
+            Defines the visual language, screens and content. Ships a design brief that downstream agents can implement without guessing.
+          </p>
+        </div>
+        <!-- Frontend -->
+        <div class="bg-paper p-10 reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">03 · Frontend</p>
+          <h3 class="display-3 mt-3">Builds what users see.<br/>Every pixel on purpose.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed max-w-md">
+            Implements screens from the brief with real components, real interactions and a real build — not a static mock.
+          </p>
+        </div>
+        <!-- Backend -->
+        <div class="bg-paper p-10 reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">04 · Backend</p>
+          <h3 class="display-3 mt-3">Wires the logic.<br/>Verified end-to-end.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed max-w-md">
+            Sets up APIs, data models and integrations, then runs automated checks against the orchestrator's acceptance criteria.
+          </p>
+        </div>
+      </div>
+
+      <!-- Floating-agent panel — single hero "diagram" -->
+      <div class="mt-16 relative rounded-2xl bg-mist border border-black/[0.06] overflow-hidden h-[360px] reveal">
+        <div class="absolute inset-0 grid place-items-center">
+          <div class="relative w-[260px] h-[260px] rounded-full border border-black/10 grid place-items-center">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1 rounded-full bg-white border border-black/10 shadow-sm">Your prompt</div>
+            <div class="w-32 h-32 rounded-full bg-white border border-black/10 grid place-items-center text-center shadow-[0_10px_30px_-10px_rgba(10,10,10,0.15)]">
+              <div>
+                <div class="text-xs text-ink/50">Orchestrator</div>
+                <div class="text-sm font-medium mt-1">OPC</div>
+              </div>
+            </div>
+            <span class="node" style="top: 30px;  left: 12px;">Designer · brief.md</span>
+            <span class="node n2" style="top: 24px;  right: 12px;">Frontend · build</span>
+            <span class="node n3" style="bottom: 30px; left: 12px;">Backend · api</span>
+            <span class="node n4" style="bottom: 24px; right: 12px;">QA · verify</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </section>
+
+  <!-- ============ 3. LIVE DEMO ============ -->
+  <section id="demo" class="bg-ink dark grain relative">
+    <div class="max-w-[1024px] mx-auto px-6 py-24 md:py-32">
+      <div class="reveal max-w-2xl">
+        <p class="eyebrow mb-4 !text-white/60">From sentence to system</p>
+        <h2 class="display-2 text-white">Watch a prompt<br/>become a&nbsp;product.</h2>
+        <p class="mt-6 text-lg text-white/70 leading-relaxed">
+          One line in. A full-stack project out. The same flow you saw above, rendered live — no shortcuts, no mocked screens.
+        </p>
+      </div>
+
+      <div class="mt-16 grid grid-cols-1 md:grid-cols-12 gap-10 items-start">
+        <div class="md:col-span-7 reveal">
+          <div class="rounded-2xl border border-white/10 bg-black overflow-hidden shadow-[0_40px_80px_-40px_rgba(0,0,0,0.8)]">
+            <div class="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f57]"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#febc2e]"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#28c840]"></span>
+              <span class="ml-3 text-[11px] text-white/40 font-mono">opc run "build me a job board for designers"</span>
+            </div>
+            <div id="term2" class="p-6 md:p-8 font-mono text-[12.5px] md:text-sm text-white/85 leading-relaxed min-h-[420px]">
+              <!-- injected -->
+            </div>
+          </div>
+        </div>
+        <div class="md:col-span-5 reveal">
+          <ul class="space-y-7 text-white/80">
+            <li class="flex gap-4">
+              <span class="accent-dot mt-2 shrink-0"></span>
+              <div>
+                <div class="text-white font-medium">Real components, not lorem</div>
+                <p class="text-white/60 mt-1 text-sm leading-relaxed">Every screen ships with typed, reviewable code — not a Figma snapshot.</p>
+              </div>
+            </li>
+            <li class="flex gap-4">
+              <span class="accent-dot mt-2 shrink-0"></span>
+              <div>
+                <div class="text-white font-medium">Real APIs, real data shape</div>
+                <p class="text-white/60 mt-1 text-sm leading-relaxed">Backend and frontend agree on the contract before a single line of UI is rendered.</p>
+              </div>
+            </li>
+            <li class="flex gap-4">
+              <span class="accent-dot mt-2 shrink-0"></span>
+              <div>
+                <div class="text-white font-medium">Real checks, real failures</div>
+                <p class="text-white/60 mt-1 text-sm leading-relaxed">If a step fails, OPC loops the responsible agent — and tells you when it can't recover.</p>
+              </div>
+            </li>
+            <li class="flex gap-4">
+              <span class="accent-dot mt-2 shrink-0"></span>
+              <div>
+                <div class="text-white font-medium">Real artifact, on disk</div>
+                <p class="text-white/60 mt-1 text-sm leading-relaxed">You get a runnable project at <span class="font-mono text-white/85">./out/your-project/</span>, not a chat transcript.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. USE CASES ============ -->
+  <section id="use" class="bg-paper">
+    <div class="max-w-[1024px] mx-auto px-6 py-24 md:py-32">
+      <div class="reveal max-w-2xl">
+        <p class="eyebrow mb-4">What you can build</p>
+        <h2 class="display-2">A whole team,<br/>one prompt away.</h2>
+        <p class="mt-6 text-lg text-ink/70 leading-relaxed">
+          OPC isn't a demo. Real teams use it to ship the things they used to brief agencies for.
+        </p>
+      </div>
+
+      <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <article class="card rounded-2xl bg-mist p-8 border border-black/[0.05] reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">E-commerce</p>
+          <h3 class="text-2xl font-semibold mt-3 tracking-tight">A storefront, ready to ship.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed">
+            Catalog, cart, checkout and an admin panel — wired to a real backend, styled to your brand, deployed in one run.
+          </p>
+          <a href="#start" class="pill-link inline-block mt-6 text-sm font-medium">Try it →</a>
+        </article>
+        <article class="card rounded-2xl bg-mist p-8 border border-black/[0.05] reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">Recruiting</p>
+          <h3 class="text-2xl font-semibold mt-3 tracking-tight">A resume screener that actually reads.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed">
+            Drop a JD, drop a folder of CVs, get a ranked shortlist with explanations — and an audit trail you can defend.
+          </p>
+          <a href="#start" class="pill-link inline-block mt-6 text-sm font-medium">Try it →</a>
+        </article>
+        <article class="card rounded-2xl bg-mist p-8 border border-black/[0.05] reveal">
+          <p class="text-xs uppercase tracking-widest text-ink/45">Marketing</p>
+          <h3 class="text-2xl font-semibold mt-3 tracking-tight">Landing pages that don't lie.</h3>
+          <p class="mt-4 text-ink/70 leading-relaxed">
+            Describe the offer. Get a page with real copy, real form, real tracking — no stock-photo placeholders.
+          </p>
+          <a href="#start" class="pill-link inline-block mt-6 text-sm font-medium">Try it →</a>
+        </article>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </section>
+
+  <!-- ============ 5. GET STARTED ============ -->
+  <section id="start" class="bg-paper">
+    <div class="max-w-[1024px] mx-auto px-6 py-28 md:py-40 text-center">
+      <div class="reveal">
+        <p class="eyebrow mb-6">Get started</p>
+        <h2 class="display-1">Start creating.<br/>Right&nbsp;now.</h2>
+        <p class="mt-7 text-lg md:text-xl text-ink/70 max-w-xl mx-auto leading-relaxed">
+          Run one command. Describe what you want. Get a project.
+        </p>
+        <div class="mt-10 inline-flex items-center gap-3 rounded-full border border-black/15 bg-white px-5 py-3 font-mono text-sm shadow-sm">
+          <span class="text-ink/50">$</span>
+          <span class="text-ink">opc run "your next big idea"</span>
+        </div>
+        <div class="mt-10 flex items-center justify-center gap-7 text-base">
+          <a href="#" class="pill-link font-medium">Read the docs</a>
+          <a href="#" class="pill-link font-medium">Star on GitHub</a>
+          <a href="#" class="pill-link font-medium">Join Discord</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="bg-paper border-t border-black/[0.06]">
+    <div class="max-w-[1024px] mx-auto px-6 py-10 text-xs text-ink/55">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>Copyright © 2026 OPC Labs. All rights reserved.</div>
+        <div class="flex items-center gap-6">
+          <a href="#" class="hover:text-ink">Privacy</a>
+          <a href="#" class="hover:text-ink">Terms</a>
+          <a href="#" class="hover:text-ink">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.documentElement.classList.add('js-ready');
+
+    // ============ Terminal simulators ============
+    function playTerminal(elId, script, opts = {}) {
+      const el = document.getElementById(elId);
+      const lineDelay = opts.lineDelay ?? 600;
+      const onComplete = opts.onComplete;
+      let i = 0;
+      function next() {
+        if (i >= script.length) { if (onComplete) onComplete(); return; }
+        const item = script[i++];
+        const line = document.createElement('div');
+        line.className = 'term-line';
+        if (item.kind === 'prompt') {
+          line.innerHTML = `<span class="text-ink/45">$</span> ${item.text}`;
+          if (elId === 'term2') line.innerHTML = `<span class="text-white/45">$</span> ${item.text}`;
+        } else if (item.kind === 'agent') {
+          line.innerHTML = `<span class="text-[#0a84ff]">[${item.who.padEnd(11,' ')}]</span> ${item.text}`;
+          if (elId === 'term2') line.innerHTML = `<span class="text-[#5ac8fa]">[${item.who.padEnd(11,' ')}]</span> ${item.text}`;
+        } else if (item.kind === 'ok') {
+          line.innerHTML = `<span class="text-[#30d158]">✓</span> ${item.text}`;
+        } else if (item.kind === 'info') {
+          line.innerHTML = `<span class="text-ink/50">${item.text}</span>`;
+          if (elId === 'term2') line.innerHTML = `<span class="text-white/50">${item.text}</span>`;
+        } else {
+          line.textContent = item.text;
+        }
+        el.appendChild(line);
+        setTimeout(next, item.delay ?? lineDelay);
+      }
+      next();
+    }
+
+    // Hero terminal — short teaser
+    const heroScript = [
+      { kind: 'prompt', text: 'opc run "a landing page for an indie SaaS"', delay: 700 },
+      { kind: 'agent',  who: 'orchestrator', text: 'plan ready · 3 tasks · estimating 1m 20s' },
+      { kind: 'agent',  who: 'designer',    text: 'wrote brief.md · palette + typography locked' },
+      { kind: 'agent',  who: 'frontend',    text: 'compiled /out/landing · 0 errors' },
+      { kind: 'agent',  who: 'backend',     text: 'POST /api/lead · verified · 200 OK' },
+      { kind: 'ok',      text: 'project ready at ./out/landing  ▸ run with:  opc serve' },
+      { kind: 'info',    text: '' },
+    ];
+
+    // Demo terminal — fuller trace
+    const demoScript = [
+      { kind: 'prompt', text: 'opc run "build me a job board for designers"', delay: 800 },
+      { kind: 'info',   text: 'parsing prompt …' },
+      { kind: 'agent',  who: 'orchestrator', text: 'decomposed into 5 tasks · assigning' },
+      { kind: 'agent',  who: 'designer',    text: 'scaffolded screens · home, listing, apply, admin' },
+      { kind: 'agent',  who: 'frontend',    text: 'react + tailwind · 12 components · a11y ✓' },
+      { kind: 'agent',  who: 'backend',     text: 'fastapi · jobs, applications, auth · schema ok' },
+      { kind: 'agent',  who: 'frontend',    text: 'wired to /api/jobs · 200 OK · types match' },
+      { kind: 'agent',  who: 'qa',          text: 'smoke + e2e · 18/18 passed' },
+      { kind: 'agent',  who: 'orchestrator', text: 'all acceptance criteria met · shipping' },
+      { kind: 'ok',      text: './out/jobboard  ·  opc serve  ·  http://localhost:5173', delay: 700 },
+    ];
+
+    // Only run when section is visible (saves tokens + feels intentional)
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const id = e.target.id;
+        if (id === 'term' && !e.target.dataset.played) {
+          e.target.dataset.played = '1';
+          playTerminal('term', heroScript, { lineDelay: 550 });
+        }
+        if (id === 'term2' && !e.target.dataset.played) {
+          e.target.dataset.played = '1';
+          playTerminal('term2', demoScript, { lineDelay: 480 });
+        }
+      });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('#term, #term2').forEach(el => io.observe(el));
+    // Safety net: if user / capture never scrolls into view, play within 2s anyway.
+    setTimeout(() => {
+      const t1 = document.getElementById('term');
+      const t2 = document.getElementById('term2');
+      if (t1 && !t1.dataset.played) { t1.dataset.played = '1'; playTerminal('term',  heroScript, { lineDelay: 480 }); }
+      if (t2 && !t2.dataset.played) { t2.dataset.played = '1'; playTerminal('term2', demoScript, { lineDelay: 420 }); }
+    }, 2000);
+
+    // ============ Scroll reveal ============
+    // Show every reveal immediately, then animate only on first IO entry (no harm if IO never fires).
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    const rev = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rev.unobserve(e.target); } });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => rev.observe(el));
+  </script>
+</body>
+</html>
